@@ -102,22 +102,5 @@ void main()
 '''
 
 
-simple_shader = '''#version 120
 
-varying vec2 fragTexCoords;
-varying vec3 fragNormal;
-varying vec4 fragPosition;
-
-uniform vec3 pointLight;
-uniform float ambientLight;
-
-void main()
-{
-    vec3 lightDir = normalize(pointLight - fragPosition.xyz);
-    float intensity = max( 0.0 , dot(fragNormal, lightDir)) + ambientLight;
-
-    gl_FragColor = vec4(0.8, 0.6, 0.4, 1.0) * intensity;
-}
-
-'''
 

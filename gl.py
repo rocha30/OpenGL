@@ -19,6 +19,13 @@ class Renderer:
         self.scene = []
         
         self.activeShader = None
+        self.skybox = None
+        self.pointLight = glm.vec3(0,0,0)
+        self.ambientLight = 0.1
+
+
+        self.value = 0.0;
+        self.elapsedTime = 0.0;
         
         
         self.filledMode = False
@@ -40,7 +47,7 @@ class Renderer:
         
         
         
-    def SetShader(self, vertexShader, fragmentShader):
+    def SetShaders(self, vertexShader, fragmentShader):
         if vertexShader is not None and fragmentShader is not None:
             self.activeShader = compileProgram(compileShader(vertexShader, GL_VERTEX_SHADER),
                                                compileShader(fragmentShader, GL_FRAGMENT_SHADER))
@@ -48,19 +55,32 @@ class Renderer:
             self.activeShader = None
 
     def Render(self):
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        
-        self.camera.Update() 
-        
+        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT )
+
+        self.camera.Update()
+
+        if self.skybox is not None:
+            self.skybox.Render()
+
+
         if self.activeShader is not None:
             glUseProgram(self.activeShader)
 
-            glUniformMatrix4fv(glGetUniformLocation(self.activeShader, "viewMatrix"), 
-                               1, GL_FALSE, glm.value_ptr(self.camera.viewMatrix))
-            
-            glUniformMatrix4fv(glGetUniformLocation(self.activeShader, "projectionMatrix"), 
-                               1, GL_FALSE, glm.value_ptr(self.camera.projectionMatrix))
+            glUniformMatrix4fv( glGetUniformLocation(self.activeShader, "viewMatrix"),
+                                1, GL_FALSE, glm.value_ptr(self.camera.viewMatrix) )
 
+            glUniformMatrix4fv( glGetUniformLocation(self.activeShader, "projectionMatrix"),
+                                1, GL_FALSE, glm.value_ptr(self.camera.projectionMatrix) )
+
+            glUniform3fv( glGetUniformLocation(self.activeShader, "pointLight"), 1, glm.value_ptr(self.pointLight) )
+            glUniform1f( glGetUniformLocation(self.activeShader, "ambientLight"), self.ambientLight )
+
+            glUniform1f( glGetUniformLocation(self.activeShader, "value"), self.value )
+            glUniform1f( glGetUniformLocation(self.activeShader, "time"), self.elapsedTime )
+
+
+            glUniform1i( glGetUniformLocation(self.activeShader, "tex0"), 0)
+            glUniform1i( glGetUniformLocation(self.activeShader, "tex1"), 1)
 
         for obj in self.scene:
             if self.activeShader is not None:
