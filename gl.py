@@ -3,6 +3,7 @@ from OpenGL.GL import *
 from buffer import Buffer
 from camera import Camera
 from OpenGL.GL.shaders import compileProgram, compileShader
+from skybox import Skybox
 
 class Renderer:
     def __init__(self,screen):
@@ -22,6 +23,10 @@ class Renderer:
         
         self.filledMode = False
         self.ToggleFilledMode()
+        
+    def CreateSkybox(self, textureList):
+        self.skybox = Skybox(textureList)
+        self.skybox.cameraRef = self.camera
         
     def ToggleFilledMode(self):
         self.filledMode = not self.filledMode
@@ -49,17 +54,17 @@ class Renderer:
         
         if self.activeShader is not None:
             glUseProgram(self.activeShader)
-            
+
             glUniformMatrix4fv(glGetUniformLocation(self.activeShader, "viewMatrix"), 
                                1, GL_FALSE, glm.value_ptr(self.camera.viewMatrix))
             
-            glUniformMatrix4fv(glGetUniformLocation(self.activeShader, "ProjectionMatrix"), 
+            glUniformMatrix4fv(glGetUniformLocation(self.activeShader, "projectionMatrix"), 
                                1, GL_FALSE, glm.value_ptr(self.camera.projectionMatrix))
 
 
         for obj in self.scene:
             if self.activeShader is not None:
-                glUniformMatrix4fv(glGetUniformLocation(self.activeShader, "ModelMatrix"), 
+                glUniformMatrix4fv(glGetUniformLocation(self.activeShader, "modelMatrix"), 
                                1, GL_FALSE, glm.value_ptr(obj.GetModelMatrix()))
                 
             obj.Render()
