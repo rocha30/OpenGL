@@ -225,3 +225,116 @@ void main()
 }
 
 '''
+
+noise_disp_shader = '''
+#version 120
+
+attribute vec3 inPosition;
+attribute vec3 inNormals;
+attribute vec2 inTexCoords;
+
+varying vec2 fragTexCoords;
+varying vec4 fragPosition;
+varying vec3 fragNormal;
+
+uniform mat4 modelMatrix;
+uniform mat4 viewMatrix;
+uniform mat4 projectionMatrix;
+
+uniform float time;
+uniform float value;        // Displacement strength
+
+// Función de ruido mejorada y más visible
+float noise3d(vec3 p) {
+    // Ruido principal con diferentes frecuencias
+    float n1 = sin(p.x * 4.0) * sin(p.y * 3.7) * sin(p.z * 5.1);
+    float n2 = sin(p.x * 8.3 + time) * sin(p.y * 7.1 + time * 0.8) * sin(p.z * 6.7 + time * 0.6);
+    float n3 = sin(p.x * 2.1 + p.y * 1.7 + p.z * 2.9 + time * 0.5);
+    
+    return (n1 + n2 * 0.7 + n3 * 0.5) / 2.2;
+}
+
+void main() {
+    vec3 p = inPosition;
+    vec3 n = normalize(inNormals);
+
+    // Coordenadas para el ruido con diferentes velocidades de animación
+    vec3 noiseCoord1 = p * 3.0 + vec3(time * 0.4, time * 0.3, time * 0.2);
+    vec3 noiseCoord2 = p * 1.5 + vec3(time * 0.1, time * 0.15, time * 0.25);
+    
+    // Generar ruido combinado
+    float noise1 = noise3d(noiseCoord1);
+    float noise2 = noise3d(noiseCoord2);
+    
+    float finalNoise = (noise1 + noise2 * 0.6);
+    
+    // Desplazar vertices con mayor amplitud
+    float displacement = value * finalNoise * 0.8;
+    p += n * displacement;
+
+    fragTexCoords = inTexCoords;
+
+    // Posición en mundo
+    vec4 worldPos = modelMatrix * vec4(p, 1.0);
+    fragPosition = worldPos;
+
+    // Normal (sin modificar para mantener iluminación)
+    fragNormal = normalize(vec3(modelMatrix * vec4(inNormals, 0.0)));
+
+    gl_Position = projectionMatrix * viewMatrix * worldPos;
+}
+
+'''
+
+explode_shader = '''
+#version 120
+
+attribute vec3 inPosition;
+attribute vec3 inNormals;
+attribute vec2 inTexCoords;
+
+varying vec2 fragTexCoords;
+varying vec4 fragPosition;
+varying vec3 fragNormal;
+
+uniform mat4 modelMatrix;
+uniform mat4 viewMatrix;
+uniform mat4 projectionMatrix;
+
+uniform float time;
+uniform float value;        // Explosion intensity
+
+void main() {
+    vec3 p = inPosition;
+    vec3 n = normalize(inNormals);
+
+    // Efecto de explosión/implosión desde el centro
+    vec3 center = vec3(0.0, 0.0, 0.0);
+    vec3 directionFromCenter = normalize(p - center);
+    float distanceFromCenter = length(p - center);
+    
+    // Onda expansiva animada
+    float wave = sin(distanceFromCenter * 10.0 - time * 8.0) * 0.5 + 0.5;
+    float pulse = sin(time * 3.0) * 0.5 + 0.5;
+    
+    // Desplazamiento dramático hacia afuera
+    float explosion = value * wave * pulse * 2.0;
+    p += directionFromCenter * explosion;
+    
+    // También agregar movimiento vertical ondulatorio
+    p.y += sin(distanceFromCenter * 8.0 + time * 4.0) * value * 0.8;
+
+    fragTexCoords = inTexCoords;
+
+    // Posición en mundo
+    vec4 worldPos = modelMatrix * vec4(p, 1.0);
+    fragPosition = worldPos;
+
+    // Normal modificada para seguir la deformación
+    vec3 modifiedNormal = normalize(n + directionFromCenter * explosion * 0.3);
+    fragNormal = normalize(vec3(modelMatrix * vec4(modifiedNormal, 0.0)));
+
+    gl_Position = projectionMatrix * viewMatrix * worldPos;
+}
+
+'''
