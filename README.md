@@ -47,16 +47,34 @@ Un renderizador OpenGL avanzado en Python con una colección impresionante de ve
 
 ## 🎮 Controles
 
-### Navegación
-- **Flechas**: Mover cámara (↑↓ = Z, ←→ = X)
-- **WASD**: Mover luz puntual
-- **F**: Toggle wireframe/filled mode
+### Cámara (Arcball)
+- Click izquierdo y arrastrar: orbitar (theta/phi)
+- Rueda del mouse: zoom (acercar/alejar)
+- Flechas ← →: orbitar horizontal
+- Flechas ↑ ↓: orbitar vertical (limitado para no voltear)
+- Teclas - y =: zoom out / zoom in
 
-### Shaders
-- **1-5**: Seleccionar vertex shader
-- **6-9**: Seleccionar fragment shader
-- **Q/A**: Aumentar/disminuir intensidad del efecto
-- **E**: Reset efectos a valor 0
+### Modelos
+- 1: Centaur_Male_Lores (activar y enfocar)
+- 2: Minecraft_cartoon_head (activar y enfocar)
+- 3: 3obj (activar y enfocar)
+- Click derecho: pasar al siguiente modelo (solo uno visible a la vez)
+
+### Shaders de la escena
+- Fragment shaders:
+	- 4: Básico (texture + luz) — `fragment_shader`
+	- 5: Toon (escalonado) — `toon_shader`
+	- 6: Negativo — `negative_shader`
+	- M: Magma — `magma_shader`
+- Vertex shaders:
+	- 7: Básico (sin deformación) — `vertex_shader`
+	- 8: Fat (inflado por normal) — `fat_shader`
+	- 9: Agua (ondulación) — `water_shader`
+- Ajuste común:
+	- Z/X: disminuir/aumentar `value` (0..1)
+
+### Post-proceso (FBO)
+- TAB: alternar entre efectos de post-procesado
 
 ## 🌟 Combinaciones Recomendadas
 
@@ -171,3 +189,4 @@ RENDERER/
 **Mario Rocha** - Renderizador OpenGL con efectos de shaders avanzados
 
 ---
+
