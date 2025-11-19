@@ -19,6 +19,15 @@ class Model(object):
 		self.textures = []
 
 		self.visible = True
+		
+		# Shaders específicos de este modelo (None = usar shaders globales del renderer)
+		self.vertexShader = None
+		self.fragmentShader = None
+		
+		# Parámetros personalizados del shader para este modelo
+		self.shaderValue = 0.5  # Valor general (para deformaciones, efectos, etc.)
+		self.shaderColor = glm.vec3(1.0, 1.0, 1.0)  # Color personalizado
+		self.useCustomColor = False  # Si debe usar el color personalizado
 
 
 	def GetModelMatrix(self):
@@ -53,9 +62,20 @@ class Model(object):
 			faceNormals = []
 
 			for i in range(len(face)):
+				# Posiciones (siempre requeridas)
 				facePositions.append( self.objFile.vertices [ face[i][0] - 1 ] )
-				faceTexCoords.append( self.objFile.texCoords[ face[i][1] - 1 ] )
-				faceNormals.append( self.objFile.normals[ face[i][2] - 1 ] )
+				
+				# Coordenadas de textura (opcionales, usar [0,0] si no existen)
+				if len(face[i]) > 1 and face[i][1] > 0 and len(self.objFile.texCoords) > 0:
+					faceTexCoords.append( self.objFile.texCoords[ face[i][1] - 1 ] )
+				else:
+					faceTexCoords.append([0.0, 0.0])  # Default UV
+				
+				# Normales (opcionales, usar [0,1,0] si no existen)
+				if len(face[i]) > 2 and face[i][2] > 0 and len(self.objFile.normals) > 0:
+					faceNormals.append( self.objFile.normals[ face[i][2] - 1 ] )
+				else:
+					faceNormals.append([0.0, 1.0, 0.0])  # Default normal (apuntando arriba)
 
 
 			for value in facePositions[0]: positions.append(value)

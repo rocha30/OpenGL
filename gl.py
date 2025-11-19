@@ -113,30 +113,55 @@ class Renderer(object):
             self.skybox.Render()
             glEnable(GL_DEPTH_TEST)
 
-        # Bind main scene shader and common uniforms
-        if self.activeShader is not None:
-            glUseProgram(self.activeShader)
-
-            glUniformMatrix4fv(glGetUniformLocation(self.activeShader, "viewMatrix"),
-                               1, GL_FALSE, glm.value_ptr(self.camera.viewMatrix))
-
-            glUniformMatrix4fv(glGetUniformLocation(self.activeShader, "projectionMatrix"),
-                               1, GL_FALSE, glm.value_ptr(self.camera.projectionMatrix))
-
-            glUniform3fv(glGetUniformLocation(self.activeShader, "pointLight"), 1, glm.value_ptr(self.pointLight))
-            glUniform1f(glGetUniformLocation(self.activeShader, "ambientLight"), self.ambientLight)
-
-            glUniform1f(glGetUniformLocation(self.activeShader, "value"), self.value)
-            glUniform1f(glGetUniformLocation(self.activeShader, "time"), self.elapsedTime)
-
-            glUniform1i(glGetUniformLocation(self.activeShader, "tex0"), 0)
-            glUniform1i(glGetUniformLocation(self.activeShader, "tex1"), 1)
-
-        # Draw all scene objects
+        # Draw all scene objects (cada uno puede tener sus propios shaders)
         for obj in self.scene:
-            if self.activeShader is not None:
-                glUniformMatrix4fv(glGetUniformLocation(self.activeShader, "modelMatrix"),
+            # Determinar qué shaders usar: los del modelo o los globales
+            useShader = None
+            if obj.vertexShader is not None and obj.fragmentShader is not None:
+                # El modelo tiene shaders propios, compilarlos si no están compilados
+                if not hasattr(obj, '_compiledShader'):
+                    obj._compiledShader = compileProgram(
+                        compileShader(obj.vertexShader, GL_VERTEX_SHADER),
+                        compileShader(obj.fragmentShader, GL_FRAGMENT_SHADER)
+                    )
+                useShader = obj._compiledShader
+            else:
+                # Usar shaders globales
+                useShader = self.activeShader
+            
+            if useShader is not None:
+                glUseProgram(useShader)
+                
+                # Uniforms comunes (view, projection, lights)
+                glUniformMatrix4fv(glGetUniformLocation(useShader, "viewMatrix"),
+                                   1, GL_FALSE, glm.value_ptr(self.camera.viewMatrix))
+                
+                glUniformMatrix4fv(glGetUniformLocation(useShader, "projectionMatrix"),
+                                   1, GL_FALSE, glm.value_ptr(self.camera.projectionMatrix))
+                
+                glUniformMatrix4fv(glGetUniformLocation(useShader, "modelMatrix"),
                                    1, GL_FALSE, glm.value_ptr(obj.GetModelMatrix()))
+                
+                glUniform3fv(glGetUniformLocation(useShader, "pointLight"), 
+                            1, glm.value_ptr(self.pointLight))
+                glUniform1f(glGetUniformLocation(useShader, "ambientLight"), self.ambientLight)
+                
+                # Value: usar el del modelo si tiene shaders propios, sino el global
+                valueToUse = obj.shaderValue if (obj.vertexShader is not None) else self.value
+                glUniform1f(glGetUniformLocation(useShader, "value"), valueToUse)
+                
+                glUniform1f(glGetUniformLocation(useShader, "time"), self.elapsedTime)
+                
+                # Texturas
+                glUniform1i(glGetUniformLocation(useShader, "tex0"), 0)
+                glUniform1i(glGetUniformLocation(useShader, "tex1"), 1)
+                
+                # Color personalizado (si el shader lo soporta y el modelo lo usa)
+                if obj.useCustomColor:
+                    colorLoc = glGetUniformLocation(useShader, "customColor")
+                    if colorLoc != -1:
+                        glUniform3fv(colorLoc, 1, glm.value_ptr(obj.shaderColor))
+            
             obj.Render()
 
         # Skybox was already rendered as background
