@@ -14,7 +14,9 @@ class Model(object):
 		self.rotation = glm.vec3(0,0,0)
 		self.scale = glm.vec3(1,1,1)
 
+		# Build buffers and compute raw geometry bounds
 		self.BuildBuffers()
+		self._compute_bounds()
 
 		self.textures = []
 
@@ -111,6 +113,36 @@ class Model(object):
 		self.posBuffer = Buffer(positions)
 		self.texCoordsBuffer = Buffer(texCoords)
 		self.normalsBuffer = Buffer(normals)
+
+	def _compute_bounds(self):
+		"""Compute axis-aligned bounding box from original OBJ vertices."""
+		if not self.objFile.vertices:
+			self.minY = 0.0
+			self.maxY = 0.0
+			return
+		minY = float('inf')
+		maxY = float('-inf')
+		for vx, vy, vz in self.objFile.vertices:
+			if vy < minY: minY = vy
+			if vy > maxY: maxY = vy
+		self.minY = minY
+		self.maxY = maxY
+
+	def align_on_floor(self, floorY, margin=0.02):
+		"""Place the model so its lowest vertex sits at floorY+margin.
+		Works regardless of original minY sign (positive or negative)."""
+		currentWorldMin = self.position.y + self.minY * self.scale.y
+		delta = (floorY + margin) - currentWorldMin
+		self.position.y += delta
+
+	def align_above_floor(self, floorModel, margin=0.02):
+		"""Align this model so its lowest vertex rests margin above the intended
+		TOP surface of the floor. For a thin plane we treat floorTop as floorModel.position.y.
+		Rotation of the floor is ignored (simplifies for flat diorama base)."""
+		floorTop = floorModel.position.y  # assume plane has negligible thickness
+		currentWorldMin = self.position.y + self.minY * self.scale.y
+		delta = (floorTop + margin) - currentWorldMin
+		self.position.y += delta
 
 
 	def AddTexture(self, filename):
