@@ -32,10 +32,10 @@ uiFontSmall = pygame.font.SysFont('Arial', 14)
 
 rend = Renderer(screen)
 
-# pygame.mixer.init()
-# pygame.mixer.music.load("music.mp3")
-# pygame.mixer.music.play(-1)  # Loop infinito
-# musicEnabled = False  # Cambiar a True cuando tengas el archivo
+pygame.mixer.init()
+pygame.mixer.music.load("music.mp3")
+pygame.mixer.music.play(-1)  # Loop infinito
+musicEnabled = False  # Cambiar a True cuando tengas el archivo
 
 rend.pointLight = glm.vec3(1,1,1)
 rend.ambientLight = 0.3  # brighten to ensure visibility while debugging
